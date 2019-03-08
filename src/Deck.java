@@ -33,12 +33,16 @@ public class Deck {
     }
 
 
-    public void add(Card card, boolean isUnusedDeck) {
+    public void add(int id, Card card, boolean isUnusedDeck) {
         if (isUnusedDeck) {
-            unusedDeck.put(atomicInteger.getAndIncrement(), card);
+            unusedDeck.put(id, card);
         } else {
-            playerDeck.put(atomicInteger.getAndIncrement(), card);
+            playerDeck.put(id, card);
         }
+    }
+
+    public int getId(){
+        return atomicInteger.getAndIncrement();
     }
 
     public String getDeck(boolean isUnusedDeck, boolean sort) {

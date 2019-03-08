@@ -91,16 +91,21 @@ public class CardReaderView {
         addButton.setOnAction(e -> {
             Card card = globalListView.getSelectionModel().getSelectedItem();
             if(card != null){
-                deck.add(card, false);
-                synchronized(observablePlayerCards) {
-                    observablePlayerCards.notifyAll();
-                }
+                int id = deck.getId();
+                deck.add(id, card, false);
+                updatePlayerListView();
+                globalListView.getSelectionModel().clearSelection();
+                System.out.println("Carta agregada al jugador exitosamente");
+
             } else {
 
                 Stage dialogStage = new Stage();
                 dialogStage.initModality(Modality.WINDOW_MODAL);
 
-                VBox vbox = new VBox(new Text("Primero, selecciona un item..."), new Button("Ok."));
+                Button myButton = new Button("Ok.");
+                myButton.setOnAction(event -> dialogStage.close());
+
+                VBox vbox = new VBox(new Text("Primero, selecciona un item..."), myButton);
                 vbox.setAlignment(Pos.CENTER);
                 vbox.setPadding(new Insets(15));
 
@@ -171,6 +176,11 @@ public class CardReaderView {
         return vBox;
     }
 
+    private void updatePlayerListView() {
+        playerListView.getItems().clear();
+        playerListView.getItems().addAll(deck.getPlayerDeck().values());
+    }
+
     /**
      * For add a TextArea to the screen, and show the result
      * @return a filled HBox to add to the UI
@@ -217,7 +227,7 @@ public class CardReaderView {
             String text;
             while ((text = bufferedReader.readLine()) != null) {
                 Card currentCard = getStringAsCard(text);
-                deck.add(currentCard, true);
+                deck.add(deck.getId(), currentCard, true);
             }
 
         } catch (FileNotFoundException ex) {
@@ -232,25 +242,7 @@ public class CardReaderView {
             }
         }
 
-        observableGlobalCards = FXCollections.observableMap(
-                deck.getUnusedDeck()
-        );
-
-        observablePlayerCards = FXCollections.observableMap(
-                deck.getPlayerDeck()
-        );
-
         playerListView.getItems().setAll(deck.getPlayerDeck().values());
-
-        // have the ListView observe the underlying map and modify its items if the key set changes.
-        observablePlayerCards.addListener((MapChangeListener<Integer, Card>) change -> {
-            System.out.println("Cambio detectado");
-            playerListView.getItems().removeAll(change.getValueRemoved());
-            if (change.wasAdded()) {
-                playerListView.getItems().add(change.getValueAdded());
-            }
-        });
-
         globalListView.getItems().setAll(deck.getUnusedDeck().values());
 
     }
