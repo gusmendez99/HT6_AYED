@@ -26,7 +26,7 @@ public class CardReaderView {
      * TextArea for show the results
      */
     ComboBox<String> dropDownMapType = new ComboBox<>();
-
+    Button addButton = new Button("Agregar");
 
 
     /**
@@ -85,7 +85,7 @@ public class CardReaderView {
         hBoxBottom.setStyle("-fx-background-color: #455a64;");
 
         //Button for load the text file
-        Button addButton = new Button("Agregar");
+
         addButton.setDisable(true);
         addButton.setPrefSize(70, 20);
         addButton.setOnAction(e -> {
@@ -150,7 +150,6 @@ public class CardReaderView {
             buttonCurrent.setDisable(false);
             globalListView.setDisable(false);
             playerListView.setDisable(false);
-            addButton.setDisable(false);
 
 
 
@@ -180,6 +179,7 @@ public class CardReaderView {
     private void updateListViews() {
         playerListView.getItems().setAll(deck.getPlayerDeck().values());
         globalListView.getItems().setAll(deck.getUnusedDeck().values());
+        addButton.setDisable(false);
     }
 
     private void updatePlayerListView() {
