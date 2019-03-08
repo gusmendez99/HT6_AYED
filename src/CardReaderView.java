@@ -134,6 +134,7 @@ public class CardReaderView {
             File selectedFile = fileChooser.showOpenDialog(stage);
             if(selectedFile != null){
                 processFile(selectedFile);
+                updateListViews();
             }
 
         });
@@ -174,6 +175,11 @@ public class CardReaderView {
 
 
         return vBox;
+    }
+
+    private void updateListViews() {
+        playerListView.getItems().setAll(deck.getPlayerDeck().values());
+        globalListView.getItems().setAll(deck.getUnusedDeck().values());
     }
 
     private void updatePlayerListView() {
@@ -242,8 +248,7 @@ public class CardReaderView {
             }
         }
 
-        playerListView.getItems().setAll(deck.getPlayerDeck().values());
-        globalListView.getItems().setAll(deck.getUnusedDeck().values());
+
 
     }
 
