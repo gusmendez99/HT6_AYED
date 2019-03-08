@@ -1,7 +1,6 @@
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class Deck {
 
@@ -20,10 +19,12 @@ public class Deck {
     private Map<Integer, Card> playerDeck; // Cards of the user
 
     private AtomicInteger atomicInteger = new AtomicInteger();
+    private String mapType = "";
 
     public Deck(String mapType) {
         this.unusedDeck = factory.getMap(mapType);
         this.playerDeck = factory.getMap(mapType);
+        this.mapType = mapType;
 
     }
 
@@ -51,28 +52,39 @@ public class Deck {
 
 
     public Map sortDeck(boolean isUnusedDeck, String sortType, String cardType) {
-        Map map = null ;
 
         if(isUnusedDeck){
             switch (sortType){
                 case NAME_SORT:
-
-                    break;
+                    return this.unusedDeck.entrySet().stream().sorted(Comparator.comparing(e -> e.getValue().getName()))
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                                    (e1, e2) -> e1, HashMap::new));
                 case TYPE_SORT:
-
-                    break;
+                    return this.unusedDeck.entrySet().stream().sorted(Comparator.comparing(e -> e.getValue().getType()))
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                                    (e1, e2) -> e1, LinkedHashMap::new));
                 default:
                     //Means a filter, not a sort
                     switch(cardType){
                         case TRAP_CARD_TYPE:
+                            return unusedDeck.entrySet()
+                                    .stream()
+                                    .filter(a->a.getValue().getType().equals(TRAP_CARD_TYPE))
+                                    .collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
 
-                            break;
                         case MAGIC_CARD_TYPE:
+                            return unusedDeck.entrySet()
+                                    .stream()
+                                    .filter(a->a.getValue().getType().equals(MAGIC_CARD_TYPE))
+                                    .collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
 
-                            break;
                         case MONSTER_CARD_TYPE:
-
-                            break;
+                            return unusedDeck.entrySet()
+                                    .stream()
+                                    .filter(a->a.getValue().getType().equals(MONSTER_CARD_TYPE))
+                                    .collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
+                        default:
+                            return unusedDeck;
 
                     }
 
@@ -80,29 +92,40 @@ public class Deck {
         } else {
             switch (sortType){
                 case NAME_SORT:
-
-                    break;
+                    return this.playerDeck.entrySet().stream().sorted(Comparator.comparing(e -> e.getValue().getName()))
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                                    (e1, e2) -> e1, LinkedHashMap::new));
                 case TYPE_SORT:
-
-                    break;
+                    return this.playerDeck.entrySet().stream().sorted(Comparator.comparing(e -> e.getValue().getType()))
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                                    (e1, e2) -> e1, LinkedHashMap::new));
                 default:
                     //Means a filter, not a sort
                     switch(cardType){
                         case TRAP_CARD_TYPE:
+                            return playerDeck.entrySet()
+                                    .stream()
+                                    .filter(a->a.getValue().getType().equals(TRAP_CARD_TYPE))
+                                    .collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
 
-                            break;
                         case MAGIC_CARD_TYPE:
+                            return playerDeck.entrySet()
+                                    .stream()
+                                    .filter(a->a.getValue().getType().equals(MAGIC_CARD_TYPE))
+                                    .collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
 
-                            break;
                         case MONSTER_CARD_TYPE:
-
-                            break;
+                            return playerDeck.entrySet()
+                                    .stream()
+                                    .filter(a->a.getValue().getType().equals(MONSTER_CARD_TYPE))
+                                    .collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
+                        default:
+                            return playerDeck;
 
                     }
 
             }
         }
-        return map;
 
     }
 

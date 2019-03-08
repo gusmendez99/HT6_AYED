@@ -8,11 +8,11 @@ public class MyMapFactory {
     public Map<Integer, Card> getMap(String param) {
 
         switch (param) {
-            case "HashMap":
+            case MapUtils.HashMapType:
                 return new HashMap<>();
-            case "TreeMap":
+            case MapUtils.TreeMapType:
                 return new TreeMap<>();
-            case "LinkedHashMap":
+            case MapUtils.LinkedHashMapType:
                 return new LinkedHashMap<>();
             default:
                 return null;

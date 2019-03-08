@@ -240,7 +240,7 @@ public class CardReaderView {
         buttonSortPlayerByName.setDisable(true);
         buttonSortPlayerByName.setPrefSize(70, 20);
         buttonSortPlayerByName.setOnAction(e -> {
-            Map mapSorted = deck.sortDeck(false, Deck.NAME_SORT, null);
+            Map mapSorted = deck.sortDeck(false, Deck.NAME_SORT, "");
             updatePlayerListView(mapSorted);
         });
 
@@ -249,7 +249,7 @@ public class CardReaderView {
         buttonSortPlayerByType.setDisable(true);
         buttonSortPlayerByType.setPrefSize(70, 20);
         buttonSortPlayerByType.setOnAction(e -> {
-            Map mapSorted = deck.sortDeck(false, Deck.TYPE_SORT, null);
+            Map mapSorted = deck.sortDeck(false, Deck.TYPE_SORT, "");
             updatePlayerListView(mapSorted);
         });
 
@@ -261,7 +261,7 @@ public class CardReaderView {
         dropDownPlayerCardType.setOnAction(e -> {
             //TODO: Filter by CardType
             String type = dropDownPlayerCardType.getValue();
-            Map mapSorted = deck.sortDeck(false, null, type);
+            Map mapSorted = deck.sortDeck(false, "", type);
             updatePlayerListView(mapSorted);
 
         });
@@ -294,7 +294,7 @@ public class CardReaderView {
         buttonSortGlobalByName.setDisable(true);
         buttonSortGlobalByName.setPrefSize(70, 20);
         buttonSortGlobalByName.setOnAction(e -> {
-            Map mapSorted = deck.sortDeck(true, Deck.NAME_SORT, null);
+            Map mapSorted = deck.sortDeck(true, Deck.NAME_SORT, "");
             updateGlobalListView(mapSorted);
         });
 
@@ -303,7 +303,7 @@ public class CardReaderView {
         buttonSortGlobalByType.setDisable(true);
         buttonSortGlobalByType.setPrefSize(70, 20);
         buttonSortGlobalByType.setOnAction(e -> {
-            Map mapSorted = deck.sortDeck(true, Deck.TYPE_SORT, null);
+            Map mapSorted = deck.sortDeck(true, Deck.TYPE_SORT, "");
             updateGlobalListView(mapSorted);
         });
 
@@ -314,8 +314,8 @@ public class CardReaderView {
         dropDownGlobalCardType.setPrefSize(150, 20);
         dropDownGlobalCardType.setOnAction(e -> {
             //TODO: Filter by CardType
-            String type = dropDownPlayerCardType.getValue();
-            Map mapSorted = deck.sortDeck(true, null, type);
+            String type = dropDownGlobalCardType.getValue();
+            Map mapSorted = deck.sortDeck(true, "", type);
             updateGlobalListView(mapSorted);
         });
 
