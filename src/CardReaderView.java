@@ -1,8 +1,7 @@
-import javafx.collections.FXCollections;
-import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableMap;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -17,6 +16,7 @@ import javafx.stage.Stage;
 
 import java.io.*;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,8 +26,18 @@ public class CardReaderView {
      * TextArea for show the results
      */
     ComboBox<String> dropDownMapType = new ComboBox<>();
-    Button addButton = new Button("Agregar");
+    Button addButton = new Button("Agregar >");
 
+
+    //For GlobalListView purpose only
+    Button buttonSortGlobalByName = new Button("A-Z");
+    Button buttonSortGlobalByType = new Button("Por tipo");
+    ComboBox<String> dropDownGlobalCardType = new ComboBox<>();
+
+    //For PlayerListView purpose only
+    Button buttonSortPlayerByName = new Button("A-Z");
+    Button buttonSortPlayerByType = new Button("Por tipo");
+    ComboBox<String> dropDownPlayerCardType = new ComboBox<>();
 
     /**
      * File chooser for pick the text file with the math expressions
@@ -35,6 +45,7 @@ public class CardReaderView {
     final FileChooser fileChooser = new FileChooser();
 
     private final String [] arrayData = {"HashMap", "TreeMap", "LinkedHashMap"};
+    private final String [] arrayDataOfCardType = {Deck.MAGIC_CARD_TYPE, Deck.TRAP_CARD_TYPE, Deck.MONSTER_CARD_TYPE, Deck.ALL_CARD_TYPE};
     //private List<String> dialogData, dialogDataList;
     //ObservableList<Card> cardItems;
     ObservableMap<Integer, Card> observableGlobalCards ;
@@ -61,9 +72,10 @@ public class CardReaderView {
         BorderPane border = new BorderPane();
         border.setTop(addHBox(stage));
         border.setLeft(addVBoxGlobal());
+        border.setCenter(addHBoxCenter());
         border.setRight(addVBoxUser());
 
-        Scene scene = new Scene(border, 600, 500);
+        Scene scene = new Scene(border, 800, 500);
         stage.setTitle("Card Reader");
         //scene.getStylesheets().add(CardReader.class.getResource("estilo.css").toExternalForm());
         stage.setScene(scene);
@@ -71,18 +83,12 @@ public class CardReaderView {
 
     }
 
-
-    /**
-     * To return a HBox with two buttons for read file and clear TextArea
-     * @param stage Stage of JavaFX where we're gonna render the UI
-     * @return a filled HBox to add to the UI
-     */
-    public VBox addHBox(Stage stage) {
+    private HBox addHBoxCenter() {
         //Starting with the last hBox
         HBox hBoxBottom = new HBox();
         hBoxBottom.setPadding(new Insets(15, 12, 15, 12));
         hBoxBottom.setSpacing(6);
-        hBoxBottom.setStyle("-fx-background-color: #455a64;");
+        //hBoxBottom.setStyle("-fx-background-color: #455a64;");
 
         //Button for load the text file
 
@@ -93,7 +99,7 @@ public class CardReaderView {
             if(card != null){
                 int id = deck.getId();
                 deck.add(id, card, false);
-                updatePlayerListView();
+                updatePlayerListView(null);
                 globalListView.getSelectionModel().clearSelection();
                 System.out.println("Carta agregada al jugador exitosamente");
 
@@ -118,7 +124,16 @@ public class CardReaderView {
 
 
         hBoxBottom.getChildren().add(addButton);
+        return hBoxBottom;
+    }
 
+
+    /**
+     * To return a HBox with two buttons for read file and clear TextArea
+     * @param stage Stage of JavaFX where we're gonna render the UI
+     * @return a filled HBox to add to the UI
+     */
+    public VBox addHBox(Stage stage) {
 
         //Then, with the first hBox
         HBox hBoxTop = new HBox();
@@ -146,6 +161,7 @@ public class CardReaderView {
         dropDownMapType.setOnAction(e -> {
             //TODO: generate Map with MyMapFactory
             String type = dropDownMapType.getValue();
+            System.out.println("Has elegido el tipo: " + type);
             deck = new Deck(type);
             buttonCurrent.setDisable(false);
             globalListView.setDisable(false);
@@ -170,7 +186,7 @@ public class CardReaderView {
 
         VBox vBox = new VBox();
         vBox.setPadding(new Insets(10));
-        vBox.getChildren().addAll(hBoxTop, hBoxBottom);
+        vBox.getChildren().addAll(hBoxTop);
 
 
         return vBox;
@@ -180,11 +196,33 @@ public class CardReaderView {
         playerListView.getItems().setAll(deck.getPlayerDeck().values());
         globalListView.getItems().setAll(deck.getUnusedDeck().values());
         addButton.setDisable(false);
+        //For GlobalListView purpose only
+        buttonSortGlobalByName.setDisable(false);
+        buttonSortGlobalByType.setDisable(false);
+        dropDownGlobalCardType.setDisable(false);
+
+        //For PlayerListView purpose only
+        buttonSortPlayerByName.setDisable(false);
+        buttonSortPlayerByType.setDisable(false);
+        dropDownPlayerCardType.setDisable(false);
     }
 
-    private void updatePlayerListView() {
+    private void updatePlayerListView(Map map) {
         playerListView.getItems().clear();
-        playerListView.getItems().addAll(deck.getPlayerDeck().values());
+        if(map != null){
+            playerListView.getItems().addAll(map.values());
+        } else {
+            playerListView.getItems().addAll(deck.getPlayerDeck().values());
+        }
+    }
+
+    private void updateGlobalListView(Map map) {
+        globalListView.getItems().clear();
+        if(map != null){
+            globalListView.getItems().addAll(map.values());
+        } else {
+            globalListView.getItems().addAll(deck.getUnusedDeck().values());
+        }
     }
 
     /**
@@ -192,6 +230,46 @@ public class CardReaderView {
      * @return a filled HBox to add to the UI
      */
     public VBox addVBoxUser() {
+        HBox hBoxTop = new HBox();
+        hBoxTop.setPadding(new Insets(15, 12, 15, 12));
+        hBoxTop.setSpacing(6);
+        hBoxTop.setStyle("-fx-background-color: #455a64;");
+
+        //Button for load the text file
+
+        buttonSortPlayerByName.setDisable(true);
+        buttonSortPlayerByName.setPrefSize(70, 20);
+        buttonSortPlayerByName.setOnAction(e -> {
+            Map mapSorted = deck.sortDeck(false, Deck.NAME_SORT, null);
+            updatePlayerListView(mapSorted);
+        });
+
+
+
+        buttonSortPlayerByType.setDisable(true);
+        buttonSortPlayerByType.setPrefSize(70, 20);
+        buttonSortPlayerByType.setOnAction(e -> {
+            Map mapSorted = deck.sortDeck(false, Deck.TYPE_SORT, null);
+            updatePlayerListView(mapSorted);
+        });
+
+
+        dropDownPlayerCardType.getItems().addAll(arrayDataOfCardType);
+
+        dropDownPlayerCardType.setPromptText("Tipo...");
+        dropDownPlayerCardType.setPrefSize(150, 20);
+        dropDownPlayerCardType.setOnAction(e -> {
+            //TODO: Filter by CardType
+            String type = dropDownPlayerCardType.getValue();
+            Map mapSorted = deck.sortDeck(false, null, type);
+            updatePlayerListView(mapSorted);
+
+        });
+
+
+        hBoxTop.getChildren().addAll(buttonSortPlayerByName, buttonSortPlayerByType, dropDownPlayerCardType);
+
+
         VBox vbox = new VBox();
         vbox.setPadding(new Insets(10));
         vbox.setSpacing(8);
@@ -199,12 +277,52 @@ public class CardReaderView {
 
         playerListView.setDisable(false);
 
-        vbox.getChildren().add(playerListView);
+        vbox.getChildren().addAll(hBoxTop, playerListView);
 
         return vbox;
     }
 
     public VBox addVBoxGlobal() {
+
+        HBox hBoxTop = new HBox();
+        hBoxTop.setPadding(new Insets(15, 12, 15, 12));
+        hBoxTop.setSpacing(6);
+        hBoxTop.setStyle("-fx-background-color: #455a64;");
+
+        //Button for load the text file
+
+        buttonSortGlobalByName.setDisable(true);
+        buttonSortGlobalByName.setPrefSize(70, 20);
+        buttonSortGlobalByName.setOnAction(e -> {
+            Map mapSorted = deck.sortDeck(true, Deck.NAME_SORT, null);
+            updateGlobalListView(mapSorted);
+        });
+
+
+
+        buttonSortGlobalByType.setDisable(true);
+        buttonSortGlobalByType.setPrefSize(70, 20);
+        buttonSortGlobalByType.setOnAction(e -> {
+            Map mapSorted = deck.sortDeck(true, Deck.TYPE_SORT, null);
+            updateGlobalListView(mapSorted);
+        });
+
+
+        dropDownGlobalCardType.getItems().addAll(arrayDataOfCardType);
+
+        dropDownGlobalCardType.setPromptText("Tipo...");
+        dropDownGlobalCardType.setPrefSize(150, 20);
+        dropDownGlobalCardType.setOnAction(e -> {
+            //TODO: Filter by CardType
+            String type = dropDownPlayerCardType.getValue();
+            Map mapSorted = deck.sortDeck(true, null, type);
+            updateGlobalListView(mapSorted);
+        });
+
+
+        hBoxTop.getChildren().addAll(buttonSortGlobalByName, buttonSortGlobalByType, dropDownGlobalCardType);
+
+
         VBox vbox = new VBox();
         vbox.setPadding(new Insets(10));
         vbox.setSpacing(4);
@@ -213,7 +331,7 @@ public class CardReaderView {
 
         globalListView.setDisable(true);
 
-        vbox.getChildren().add(globalListView);
+        vbox.getChildren().addAll(hBoxTop, globalListView);
 
         return vbox;
     }
