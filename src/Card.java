@@ -15,4 +15,9 @@ public class Card{
     public String getName(){
         return this.name;
     }
+
+    @Override
+    public String toString() {
+        return "Nombre: " + name + " - Tipo: " + type;
+    }
 }

@@ -1,17 +1,22 @@
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Deck {
 
     //Types of cards
+    
+    
     public static final String TRAP_CARD_TYPE = "Trampa";
     public static final String MAGIC_CARD_TYPE = "Hechizo";
     public static final String MONSTER_CARD_TYPE = "Monstruo";
 
     private MyMapFactory factory = new MyMapFactory();
-    private Map<String, Card> unusedDeck; //Cards in memory
-    private Map<String, Card> playerDeck; // Cards of the user
+    private Map<Integer, Card> unusedDeck; //Cards in memory
+    private Map<Integer, Card> playerDeck; // Cards of the user
+
+    private AtomicInteger atomicInteger = new AtomicInteger();
 
     public Deck(String mapType) {
         this.unusedDeck = factory.getMap(mapType);
@@ -19,25 +24,20 @@ public class Deck {
 
     }
 
-    public int getType(Card card) {
-        switch (card.getType()) {
-            case TRAP_CARD_TYPE:
-                return 1;
-            case MAGIC_CARD_TYPE:
-                return 2;
-            case MONSTER_CARD_TYPE:
-                return 3;
-            default:
-                return 0;
-        }
-
+    public Map<Integer, Card> getUnusedDeck() {
+        return unusedDeck;
     }
 
-    public void add(String key, Card card, boolean isUnusedDeck) {
+    public Map<Integer, Card> getPlayerDeck() {
+        return playerDeck;
+    }
+
+
+    public void add(Card card, boolean isUnusedDeck) {
         if (isUnusedDeck) {
-            unusedDeck.put(key, card);
+            unusedDeck.put(atomicInteger.getAndIncrement(), card);
         } else {
-            playerDeck.put(key, card);
+            playerDeck.put(atomicInteger.getAndIncrement(), card);
         }
     }
 
@@ -71,6 +71,20 @@ public class Deck {
         return formattedResponse;
     }
 
+    public String getType(Card card) {
+        switch (card.getType()) {
+            case TRAP_CARD_TYPE:
+                return "1";
+            case MAGIC_CARD_TYPE:
+                return "2";
+            case MONSTER_CARD_TYPE:
+                return "3";
+            default:
+                return "";
+        }
+
+    }
+
     public String getCardType(String cardName) {
         String type = "";
         Iterator it = unusedDeck.keySet().iterator();
@@ -99,9 +113,7 @@ public class Deck {
         return formattedResponse;
     }
 
-    public Map<String, Card> getPlayerDeck() {
-        return playerDeck;
-    }
+
 
     public int size() {
         return unusedDeck.size();

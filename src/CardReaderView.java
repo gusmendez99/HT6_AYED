@@ -1,20 +1,22 @@
+import javafx.collections.FXCollections;
+import javafx.collections.MapChangeListener;
+import javafx.collections.ObservableMap;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.*;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,31 +25,25 @@ public class CardReaderView {
     /**
      * TextArea for show the results
      */
-    TextArea result = new TextArea("...");
+    ComboBox<String> dropDownMapType = new ComboBox<>();
+
+
+
     /**
      * File chooser for pick the text file with the math expressions
      */
     final FileChooser fileChooser = new FileChooser();
 
     private final String [] arrayData = {"HashMap", "TreeMap", "LinkedHashMap"};
-    private List<String> dialogData, dialogDataList;
+    //private List<String> dialogData, dialogDataList;
+    //ObservableList<Card> cardItems;
+    ObservableMap<Integer, Card> observableGlobalCards ;
+    ObservableMap<Integer, Card> observablePlayerCards ;
 
-    /**
-     * To return a cleaned String of the math expression
-     * @param input receives a String, with the full math operation
-     * @param acceptedInputs ArrayList that have the valid operators
-     * @return
-     */
-    private static ArrayList<String> cleanInput(String input, ArrayList<String> acceptedInputs) {
-        ArrayList<String> stringsArrayList = new ArrayList<>(Arrays.asList(input.trim().split("")));
-        ArrayList<String> cleanedInputArrayList = new ArrayList<>();
-        for (String s : stringsArrayList) {
-            if (acceptedInputs.contains(s)) {
-                cleanedInputArrayList.add(s);
-            }
-        }
-        return cleanedInputArrayList;
-    }
+    Deck deck = null;
+    ListView<Card> globalListView = new ListView<>();
+    ListView<Card> playerListView = new ListView<>();
+
 
     /**
      * To show the JavFX UI
@@ -63,64 +59,156 @@ public class CardReaderView {
         fileChooser.setInitialDirectory(new File(currentPath));
 
         BorderPane border = new BorderPane();
-        HBox hbox = addHBox(stage);
-        border.setTop(hbox);
-        border.setLeft(addVBox());
+        border.setTop(addHBox(stage));
+        border.setLeft(addVBoxGlobal());
+        border.setRight(addVBoxUser());
 
-        Scene scene = new Scene(border, 400, 400);
-        stage.setTitle("Calculadora");
-        //scene.getStylesheets().add(Calculadora.class.getResource("estilo.css").toExternalForm());
+        Scene scene = new Scene(border, 600, 500);
+        stage.setTitle("Card Reader");
+        //scene.getStylesheets().add(CardReader.class.getResource("estilo.css").toExternalForm());
         stage.setScene(scene);
         stage.show();
 
     }
+
 
     /**
      * To return a HBox with two buttons for read file and clear TextArea
      * @param stage Stage of JavaFX where we're gonna render the UI
      * @return a filled HBox to add to the UI
      */
-    public HBox addHBox(Stage stage) {
-        HBox hbox = new HBox();
-        hbox.setPadding(new Insets(15, 12, 15, 12));
-        hbox.setSpacing(6);
-        hbox.setStyle("-fx-background-color: #455a64;");
+    public VBox addHBox(Stage stage) {
+        //Starting with the last hBox
+        HBox hBoxBottom = new HBox();
+        hBoxBottom.setPadding(new Insets(15, 12, 15, 12));
+        hBoxBottom.setSpacing(6);
+        hBoxBottom.setStyle("-fx-background-color: #455a64;");
 
         //Button for load the text file
-        Button buttonCurrent = new Button("Open File");
-        buttonCurrent.setPrefSize(100, 20);
-        buttonCurrent.setOnAction(e -> {
-            File selectedFile = fileChooser.showOpenDialog(stage);
-            if(selectedFile != null){
-                ArrayList<String> myLines = readFile(selectedFile);
-                for(String line: myLines){
-                    //TODO: Process each line
-                    //String resultStr = operate(line);
-                    //result.appendText("\n" + line + " tiene como resultado: " + resultStr);
+        Button addButton = new Button("Agregar");
+        addButton.setDisable(true);
+        addButton.setPrefSize(70, 20);
+        addButton.setOnAction(e -> {
+            Card card = globalListView.getSelectionModel().getSelectedItem();
+            if(card != null){
+                deck.add(card, false);
+                synchronized(observablePlayerCards) {
+                    observablePlayerCards.notifyAll();
                 }
+            } else {
+
+                Stage dialogStage = new Stage();
+                dialogStage.initModality(Modality.WINDOW_MODAL);
+
+                VBox vbox = new VBox(new Text("Primero, selecciona un item..."), new Button("Ok."));
+                vbox.setAlignment(Pos.CENTER);
+                vbox.setPadding(new Insets(15));
+
+                dialogStage.setScene(new Scene(vbox));
+                dialogStage.show();
             }
 
         });
 
-        //Button for clear the input data
+
+
+        hBoxBottom.getChildren().add(addButton);
+
+
+        //Then, with the first hBox
+        HBox hBoxTop = new HBox();
+        hBoxTop.setPadding(new Insets(15, 12, 15, 12));
+        hBoxTop.setSpacing(6);
+        hBoxTop.setStyle("-fx-background-color: #455a64;");
+
+        //Button for load the text file
+        Button buttonCurrent = new Button("Abrir archivo");
+        buttonCurrent.setDisable(true);
+        buttonCurrent.setPrefSize(70, 20);
+        buttonCurrent.setOnAction(e -> {
+            File selectedFile = fileChooser.showOpenDialog(stage);
+            if(selectedFile != null){
+                processFile(selectedFile);
+            }
+
+        });
+
+        dropDownMapType.getItems().addAll(arrayData);
+
+        dropDownMapType.setPromptText("Selecciona tipo de Map...");
+        dropDownMapType.setPrefSize(150, 20);
+        dropDownMapType.setOnAction(e -> {
+            //TODO: generate Map with MyMapFactory
+            String type = dropDownMapType.getValue();
+            deck = new Deck(type);
+            buttonCurrent.setDisable(false);
+            globalListView.setDisable(false);
+            playerListView.setDisable(false);
+            addButton.setDisable(false);
+
+
+
+
+        });
+        buttonCurrent.setPrefSize(180, 20);
+
+        /*Button for clear the input data
         Button buttonProjected = new Button("Clear");
         buttonProjected.setPrefSize(100, 20);
         buttonProjected.setOnAction(e -> {
             result.clear();
-        });
+        });*/
 
-        hbox.getChildren().addAll(buttonCurrent, buttonProjected);
+        hBoxTop.getChildren().addAll(buttonCurrent, dropDownMapType);
 
-        return hbox;
+
+
+        VBox vBox = new VBox();
+        vBox.setPadding(new Insets(10));
+        vBox.getChildren().addAll(hBoxTop, hBoxBottom);
+
+
+        return vBox;
     }
+
+    /**
+     * For add a TextArea to the screen, and show the result
+     * @return a filled HBox to add to the UI
+     */
+    public VBox addVBoxUser() {
+        VBox vbox = new VBox();
+        vbox.setPadding(new Insets(10));
+        vbox.setSpacing(8);
+
+
+        playerListView.setDisable(false);
+
+        vbox.getChildren().add(playerListView);
+
+        return vbox;
+    }
+
+    public VBox addVBoxGlobal() {
+        VBox vbox = new VBox();
+        vbox.setPadding(new Insets(10));
+        vbox.setSpacing(4);
+
+        //Adding the TextArea to the VBox
+
+        globalListView.setDisable(true);
+
+        vbox.getChildren().add(globalListView);
+
+        return vbox;
+    }
+
 
     /**
      * For read a file line by line
      * @param file File object which have the math operation
      * @return an ArrayList of String lines of the file
      */
-    private ArrayList<String> readFile(File file){
-        ArrayList<String> lines = new ArrayList<>();
+    private void processFile(File file){
         BufferedReader bufferedReader = null;
 
         try {
@@ -128,7 +216,8 @@ public class CardReaderView {
             bufferedReader = new BufferedReader(new FileReader(file));
             String text;
             while ((text = bufferedReader.readLine()) != null) {
-                lines.add(text);
+                Card currentCard = getStringAsCard(text);
+                deck.add(currentCard, true);
             }
 
         } catch (FileNotFoundException ex) {
@@ -143,28 +232,36 @@ public class CardReaderView {
             }
         }
 
-        return lines;
+        observableGlobalCards = FXCollections.observableMap(
+                deck.getUnusedDeck()
+        );
+
+        observablePlayerCards = FXCollections.observableMap(
+                deck.getPlayerDeck()
+        );
+
+        playerListView.getItems().setAll(deck.getPlayerDeck().values());
+
+        // have the ListView observe the underlying map and modify its items if the key set changes.
+        observablePlayerCards.addListener((MapChangeListener<Integer, Card>) change -> {
+            System.out.println("Cambio detectado");
+            playerListView.getItems().removeAll(change.getValueRemoved());
+            if (change.wasAdded()) {
+                playerListView.getItems().add(change.getValueAdded());
+            }
+        });
+
+        globalListView.getItems().setAll(deck.getUnusedDeck().values());
+
     }
 
-    public void process(){
+    private Card getStringAsCard(String text) {
+        String[] parts = text.split("\\|");
+        return new Card(parts[0], parts[1]);
 
     }
 
-    /**
-     * For add a TextArea to the screen, and show the result
-     * @return a filled HBox to add to the UI
-     */
-    public VBox addVBox() {
-        VBox vbox = new VBox();
-        vbox.setPadding(new Insets(10));
-        vbox.setSpacing(8);
 
-        //Adding the TextArea to the VBox
-        result.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        vbox.getChildren().add(result);
-
-        return vbox;
-    }
 
 
 
